@@ -1,45 +1,62 @@
-'use client'
+"use client"
 
-import { updateUser } from '@/app/actions/actions'
-import { userFormSchema, User, UserFormData } from '@/app/actions/schemas'
-import { UserForm } from './user-form'
-import MutableDialog, { ActionState } from '@/components/mutable-dialog'
+import { useState } from "react"
+import { userFormSchema, type User, type UserFormData } from "@/app/actions/schemas"
+import { UserForm } from "./user-form"
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogTrigger,
+} from "@/components/ui/dialog"
+import { Button } from "@/components/ui/button"
+import { zodResolver } from "@hookform/resolvers/zod"
+import { useForm } from "react-hook-form"
+import type React from "react" // Added import for React
 
 interface UserEditDialogProps {
   user: User
+  onSubmit: (data: UserFormData) => Promise<void>
+  children: React.ReactNode
 }
 
-export function UserEditDialog({ user }: UserEditDialogProps) {
-  const handleEditUser = async (data: UserFormData): Promise<ActionState<User>> => {
-    try {
-      const updatedUser = await updateUser(user.id, data)
-      return {
-        success: true,
-        message: `User ${updatedUser.name} updated successfully`,
-        data: updatedUser,
-      }
-    } catch (error) {
-      return {
-        success: false,
-        message: 'Failed to update user',
-      }
-    }
+export function UserEditDialog({ user, onSubmit, children }: UserEditDialogProps) {
+  const [isOpen, setIsOpen] = useState(false)
+
+  const form = useForm<UserFormData>({
+    resolver: zodResolver(userFormSchema),
+    defaultValues: {
+      name: user.name,
+      email: user.email,
+      phoneNumber: user.phoneNumber,
+    },
+  })
+
+  const handleSubmit = async (data: UserFormData) => {
+    await onSubmit(data)
+    setIsOpen(false)
+    form.reset(data)
   }
 
   return (
-    <MutableDialog<UserFormData>
-      formSchema={userFormSchema}
-      FormComponent={UserForm}
-      action={handleEditUser}
-      triggerButtonLabel="Edit"
-      editDialogTitle={`Edit ${user.name}`}
-      dialogDescription={`Update the details of ${user.name} below.`}
-      submitButtonLabel="Save Changes"
-      defaultValues={{
-        name: user.name,
-        email: user.email,
-        phoneNumber: user.phoneNumber,
-      }}
-    />
+    <Dialog open={isOpen} onOpenChange={setIsOpen}>
+      <DialogTrigger asChild>{children}</DialogTrigger>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>Edit {user.name}</DialogTitle>
+          <DialogDescription>Update the details of {user.name} below.</DialogDescription>
+        </DialogHeader>
+        <UserForm form={form} onSubmit={handleSubmit} />
+        <div className="flex justify-end space-x-2 mt-4">
+          <Button variant="outline" onClick={() => setIsOpen(false)}>
+            Cancel
+          </Button>
+          <Button onClick={form.handleSubmit(handleSubmit)}>Save Changes</Button>
+        </div>
+      </DialogContent>
+    </Dialog>
   )
 }
+
