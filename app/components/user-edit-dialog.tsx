@@ -48,7 +48,7 @@ export function UserEditDialog({ user, onSubmit, children }: UserEditDialogProps
           <DialogTitle>Edit {user.name}</DialogTitle>
           <DialogDescription>Update the details of {user.name} below.</DialogDescription>
         </DialogHeader>
-        <UserForm form={form} onSubmit={handleSubmit} />
+        <UserForm form={form} />
         <div className="flex justify-end space-x-2 mt-4">
           <Button variant="outline" onClick={() => setIsOpen(false)}>
             Cancel
